@@ -200,7 +200,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     return df
 
 
-def save_map_as_image_static(lat, lon, zoom=15, size=(10, 450), marker_path='img/Marker.png', marker_width=50):
+def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='img/Marker.png', marker_width=50):
     # Esri satellite tile provider
     esri_satellite_url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 
@@ -417,7 +417,7 @@ with col2:
                     pdf.cell(0, 10, "ALMOND - iMAP", ln=True, align="L")
                     pdf.set_font("Arial", 'B', 14)
                     pdf.cell(0, 9, "irrigation Monthly Annual Planner Report for ALMOND orchards", ln=True, align="L")
-                    pdf.image("img/Logo.png", x=137, y=10, w=80)
+                    pdf.image("img/Marker.png", x=137, y=10, w=80)
 
                     pdf.ln(2)
                     pdf.set_font("Arial", size=13)
