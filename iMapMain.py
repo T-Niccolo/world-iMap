@@ -200,7 +200,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     return df
 
 
-def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='img/Logo.png', marker_width=50):
+def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='img/Marker.png', marker_width=50):
     # Esri satellite tile provider
     esri_satellite_url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 
