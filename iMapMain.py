@@ -234,10 +234,10 @@ def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='im
 # 🌟 **Streamlit UI**
 st.markdown("<h1 style='text-align: center;'>ALMOND - irrigation Monthly Annual Planner</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align: center; font-size: 20px'>This is a research founded by <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a>. </p>",
+    "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>",
     unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align: center;'>For further information contact: <a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), <a href=\"mailto:mzwienie@ucdavis.edu\"> <strong>Maciej Zwieniecki</strong></a> (UC Davis), <a href=\"mailto:zellis@ucdavis.edu\"> <strong>Zac Ellis</strong></a> (UC Davis), <a href=\"mailto:niccolo.tricerri@unito.it\"> <strong>Niccolò Tricerri</strong></a> (UNITO - IUSS Pavia)  </p>",
+    "<p style='text-align: center;'>For further information contact: <a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), <a href=\"mailto:mzwienie@ucdavis.edu\"> <strong>Maciej Zwieniecki</strong></a> (UC Davis), <a href=\"mailto:zellis@ucdavis.edu\"> <strong>Zac Ellis</strong></a> (UC Davis), and <a href=\"mailto:niccolo.tricerri@unito.it\"> <strong>Niccolò Tricerri</strong></a> (UNITO - IUSS Pavia)  </p>",
     unsafe_allow_html=True)
 
 # 📌 **User Inputs**
