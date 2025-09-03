@@ -231,124 +231,6 @@ def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='im
     return image_path
 
     # Function to create a PDF report
-    def create_pdf_report(fig, df_irrigation, ndvi, total_irrigation, unit_label, NotesText, lat, lon):
-
-                    pdf = FPDF()
-                    pdf.add_page()
-
-                    pdf.set_font("Arial", 'B', 20)
-                    pdf.cell(0, 10, "ALMOND - iMAP", ln=True, align="L")
-                    pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 9, "irrigation Monthly Annual Planner Report for ALMOND orchards", ln=True, align="L")
-                    pdf.image("img/Logo.png", x=137, y=10, w=80)
-
-                    pdf.ln(2)
-                    pdf.set_font("Arial", size=13)
-                    # pdf.cell(0, 8, f"NDVI: {ndvi}", ln=True)
-
-                    month_names = pd.to_datetime(irrigation_months, format='%m').month_name()
-                    month_names_str = ' - '.join(month_names)
-                    pdf.cell(0, 8, f"Selected irrigation period: {month_names_str}", ln=True)
-                    pdf.cell(0, 8, f"Seasonal ET0: {df_irrigation['ET0'].sum():.0f} {unit_label}", ln=True)
-
-                    # pdf.cell(0, 8, f"Total Irrigation: {total_irrigation:.2f} {unit_label}", ln=True)
-                    # pdf.cell(0, 8, f"Irrigation rate: {irrigation_rate:.2f} {unit_label}/hour", ln=True)
-
-                    pdf.set_font("Arial", style='I', size=13)
-                    half_width = (pdf.w - 2 * pdf.l_margin) - 50
-
-                    pdf.multi_cell(half_width, 8, f"Notes: {NotesText}")
-
-                    pdf.ln(4)
-                    pdf.cell(0, 8, "Weekly plan:", ln=True)
-
-                    # Filter by selected irrigation months
-                    start_month, end_month = irrigation_months
-                    filtered_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)]
-
-                    
-                    filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
-                    filtered_df[['ET0', 'ETa', 'week_irrigation_volume']] = filtered_df[['ET0', 'ETa', 'irrigation']] / 4
-
-                    selected_columns_df = (
-                        filtered_df[['month', 'ET0', 'ETa', 'week_irrigation_volume', 'alert']]
-                        .rename(columns={
-                            'month': 'Month',
-                            'ET0': f'ET0 ({unit_label})',
-                            'ETa': f'ETa ({unit_label})',
-                            'week_irrigation_volume': f'Irrigation Volume ({unit_label})',
-                            # 'week_irrigation_hours': f'Irrigation time (hours)',
-                            'alert': 'Alert'
-                        })
-                        .round(1))
-
-                    # Add table headers
-                    headers = selected_columns_df.columns.tolist()
-
-                    # Set custom column widths for each column
-                    column_widths = [25, 35, 35, 55, 28]  # Define a width for each column
-
-                    # Set font for headers
-                    pdf.set_font("Arial", 'B', 12)
-                    for i, header in enumerate(headers):
-                        pdf.cell(column_widths[i], 10, header, border=1, align='C')  # Use the respective column width
-                    pdf.ln()  # Line break after headers
-
-                    # Set font for data rows
-                    pdf.set_font("Arial", '', 12)
-
-                    # Iterate over each row of the filtered DataFrame
-                    for index, row in selected_columns_df.iterrows():
-                        for i, value in enumerate(row):
-                            pdf.cell(column_widths[i], 10, str(value), border=1,
-                                     align='C')  # Use respective width for each column
-                        pdf.ln()  # Line break after each row
-
-                    pdf.ln(3)
-
-                    pdf.set_font("Arial", size=13)
-                    pdf.cell(0, 8,
-                             f"data for Location (lat: {round(lat, 3)} lon: {round(lon, 3)}) - NDVI: {ndvi} - Total Irrigation: {total_irrigation:.2f} {unit_label}",
-                             ln=True, align='C')
-                    pdf.cell(0, 8, f"", ln=True)
-
-                    pdf.ln(3)
-
-                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
-                        fig.savefig(tmpfile.name, format="PNG", bbox_inches='tight')
-                        tmpfile.seek(0)
-                        image_path = tmpfile.name
-
-                    image_width = 100
-                    image_height = 95
-
-                    bottom_margin = pdf.b_margin
-                    y_position = pdf.h - bottom_margin - image_height
-
-                    pdf.image(image_path, x=pdf.l_margin, y=y_position, w=image_width)
-                    os.remove(image_path)
-
-                    image_path = save_map_as_image_static(lat, lon)
-                    image_width = 87
-                    image_height = 93
-                    right_margin = pdf.r_margin
-                    bottom_margin = pdf.b_margin
-
-                    # Calculate X and Y for bottom-right positioning
-                    x_position = pdf.w - right_margin - image_width
-                    y_position = pdf.h - bottom_margin - image_height
-
-                    pdf.image(image_path, x=x_position, y=y_position, w=image_width)
-                    os.remove(image_path)
-
-                    current_date = datetime.now().strftime("%B %d, %Y")
-                    pdf.set_y(-33)
-                    pdf.set_font("Arial", size=11)
-                    pdf.cell(0, 10, current_date, 0, 0, 'L')
-                    pdf.cell(0, 10, "Report from Or, Maciej, Zac, and Niccolò.", 0, 0, 'R')
-
-                    pdf_bytes = pdf.output(dest="S").encode("latin1")
-                    return pdf_bytes
 
 
 # 🌟 **Streamlit UI**
@@ -357,7 +239,7 @@ st.markdown(
     "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>",
     unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align: center;'>For further information contact: <a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), <a href=\"mailto:mzwienie@ucdavis.edu\"> <strong>Maciej Zwieniecki</strong></a> (UC Davis), <a href=\"mailto:zellis@ucdavis.edu\"> <strong>Zac Ellis</strong></a> (UC Davis), and <a href=\"mailto:niccolo.tricerri@unito.it\"> <strong>Niccolò Tricerri</strong></a> (UNITO - IUSS Pavia)  </p>",
+    "<p style='text-align: center;'><a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), <a href=\"mailto:mzwienie@ucdavis.edu\"> <strong>Maciej Zwieniecki</strong></a> (UC Davis), <a href=\"mailto:zellis@ucdavis.edu\"> <strong>Zac Ellis</strong></a> (UC Davis), and <a href=\"mailto:niccolo.tricerri@unito.it\"> <strong>Niccolò Tricerri</strong></a> (UNITO - IUSS Pavia)  </p>",
     unsafe_allow_html=True)
 
 # 📌 **User Inputs**
@@ -374,6 +256,14 @@ unit_system = "Imperial (inches)" if use_imperial else "Metric (mm)"
 unit_label = "inches" if use_imperial else "mm"
 conversion_factor = 0.03937 if use_imperial else 1
 
+# --- Sliders (trigger irrigation calc only)
+m_winter = st.sidebar.slider(f"Winter Irrigation ({unit_label})", 0, int(round(700 * conversion_factor)), 0,
+                                step=int(round(20 * conversion_factor)),
+                                help="Did you irrigate in winter? If yes, how much?")
+                                
+irrigation_months = st.sidebar.slider("Irrigation Months", 1, 12, (3, 10), step=1,
+                                        help="During which months will you irrigate?")
+
 # Layout: 2 columns (map | output)
 col2, col1 = st.columns([6, 4])
 
@@ -383,179 +273,136 @@ with col1:
     map_data = display_map()
 
 with col2:
-    # --- Sliders (trigger irrigation calc only)
-    m_winter = st.sidebar.slider(f"Winter Irrigation ({unit_label})", 0, int(round(700 * conversion_factor)), 0,
-                                 step=int(round(20 * conversion_factor)),
-                                 help="Did you irrigate in winter? If yes, how much?")
-                                 
-    irrigation_months = st.sidebar.slider("Irrigation Months", 1, 12, (3, 10), step=1,
-                                          help="During which months will you irrigate?")
 
     # --- Handle map click
     if map_data and map_data["last_clicked"] is not None and "lat" in map_data["last_clicked"]:
         coords = map_data["last_clicked"]
 
-        # ✅ Only proceed if coords is valid
-        if coords and "lat" in coords and "lng" in coords:
+        
+        lat, lon = coords["lat"], coords["lng"]
 
-            lat, lon = coords["lat"], coords["lng"]
+        location = (lat, lon)
 
-            location = (lat, lon)
+        # Check if location changed
+        now = time.time()
+        last_loc = st.session_state.get("last_location")
+        last_time = st.session_state.get("last_location_time", 0)
 
-            # Check if location changed
-            now = time.time()
-            last_loc = st.session_state.get("last_location")
-            last_time = st.session_state.get("last_location_time", 0)
+        # location_changed = (last_loc != location) and (now - last_time > 5)
 
-            # location_changed = (last_loc != location) and (now - last_time > 5)
+        if location != last_loc or (now - last_time > 5):
+            # Update session state with the new location and timestamp
+            st.session_state["last_location"] = location
+            st.session_state["last_location_time"] = now
 
-            if location != last_loc or (now - last_time > 5):
-                # Update session state with the new location and timestamp
-                st.session_state["last_location"] = location
-                st.session_state["last_location_time"] = now
+            # Fetch and store weather data
+            st.session_state["et0"] = get_et0(lat, lon)
+            st.session_state["rain"] = get_rain(lat, lon)
+            st.session_state["ndvi"] = get_ndvi(lat, lon)
 
-                # Fetch and store weather data
-                st.session_state["et0"] = get_et0(lat, lon)
-                st.session_state["rain"] = get_rain(lat, lon)
-                st.session_state["ndvi"] = get_ndvi(lat, lon)
+        # Retrieve stored values
+        rain = st.session_state.get("rain")
+        ndvi = st.session_state.get("ndvi")
+        et0 = st.session_state.get("et0")
 
-            # Retrieve stored values
-            rain = st.session_state.get("rain")
-            ndvi = st.session_state.get("ndvi")
-            et0 = st.session_state.get("et0")
+        IF = 0.33 / (1 + np.exp(20 * (ndvi - 0.6))) + 1
+        pNDVI = ndvi * IF
 
-            IF = 0.33 / (1 + np.exp(20 * (ndvi - 0.6))) + 1
-            pNDVI = ndvi * IF
+        if rain is not None and ndvi is not None and et0 is not None:
+            
+            total_rain = rain * conversion_factor
+            m_rain = st.sidebar.slider(f"Fix Rain to Field ({unit_label})", 0, int(round(1000 * conversion_factor)),
+                                        int(total_rain), step=1, disabled=False,
+                                        help="Do you know a better value? Do you think less water was retained in the soil?")
 
-            if rain is not None and ndvi is not None and et0 is not None:
-                total_rain = rain * conversion_factor
-                m_rain = st.sidebar.slider(f"Fix Rain to Field ({unit_label})", 0, int(round(1000 * conversion_factor)),
-                                           int(total_rain), step=1, disabled=False,
-                                           help="Do you know a better value? Do you think less water was retained in the soil?")
+            # 🔄 Always recalculate irrigation when sliders or location change
+            df_irrigation = calc_irrigation(pNDVI, m_rain , et0, m_winter, irrigation_months, 1)
 
-                # 🔄 Always recalculate irrigation when sliders or location change
-                df_irrigation = calc_irrigation(pNDVI, m_rain , et0, m_winter, irrigation_months, 1)
+            total_irrigation = df_irrigation['irrigation'].sum()
+            m_irrigation = st.sidebar.slider(f"Water Allocation ({unit_label})", 0,
+                                                int(round(1500 * conversion_factor)),
+                                                int(total_irrigation), step=int(round(20 * conversion_factor)),
+                                                help="Here's the recommended irrigation. Are you constrained by water availability, or considering extra irrigation for salinity management?")
 
-                total_irrigation = df_irrigation['irrigation'].sum()
-                m_irrigation = st.sidebar.slider(f"Water Allocation ({unit_label})", 0,
-                                                 int(round(1500 * conversion_factor)),
-                                                 int(total_irrigation), step=int(round(20 * conversion_factor)),
-                                                 help="Here's the recommended irrigation. Are you constrained by water availability, or considering extra irrigation for salinity management?")
+            irrigation_factor = m_irrigation / total_irrigation
 
-                irrigation_factor = m_irrigation / total_irrigation
-
-                # ✅ Adjust ET0 in the table
-                df_irrigation = calc_irrigation(pNDVI, m_rain, et0, m_winter, irrigation_months, irrigation_factor)
-                total_irrigation = df_irrigation['irrigation'].sum()
-
-
-                st.markdown(f"<p style='text-align: center; font-size: 30px;'>Rain: {rain * conversion_factor:.2f} {unit_label} | ET₀: {df_irrigation['ET0'].sum():.0f} {unit_label}</p>", unsafe_allow_html=True)
-                st.markdown(f"<p style='text-align: center; font-size: 30px;'>NDVI: {ndvi:.2f} | pNDVI: {pNDVI:.2f}| Irrigation: {total_irrigation:.0f} {unit_label}</p>", unsafe_allow_html=True)
-
-                # 📈 Plot
-                st.subheader('Monthly Illustration:')
-                fig, ax = plt.subplots()
-
-                # Add drought bars (SW1 = 0) only if they exist
-                ax.bar(df_irrigation.loc[df_irrigation['SW1'] > 0, 'month'],
-                       df_irrigation.loc[df_irrigation['SW1'] > 0, 'irrigation'], alpha=1, label="Irrigation")
-
-                if (df_irrigation['SW1'] == 0).any():
-                    ax.bar(df_irrigation.loc[df_irrigation['SW1'] == 0, 'month'],
-                           df_irrigation.loc[df_irrigation['SW1'] == 0, 'irrigation'], alpha=1, label="Drought",
-                           color='#FF4B4B')
-
-                # Add a shaded area for SW1 behind the bars
-                ax.fill_between(
-                    df_irrigation['month'],  # X-axis values (months)
-                    0,  # Start of the shaded area (baseline)
-                    df_irrigation['SW1'],  # End of the shaded area (SW1 values)
-                    color='#74ac72',  # Green color for the shaded area
-                    alpha=0.4,  # Transparency
-                    label="Soil Water"
-                )
-
-                # Iterate through the data to conditionally color the bars
-                bar_colors = ['#FF4B4B' if sw1 == 0 else '#3897c5' for sw1 in df_irrigation['SW1']]
-
-                # Set plot limits and labels
-                ax.set_ylim(bottom=-3.7 * conversion_factor)
-                ax.set_xlabel("Month")
-                ax.set_ylabel(f"Water Amount ({unit_label})")
-                ax.legend()
-
-                # Display the plot
-                st.pyplot(fig)
-
-                # 📊 Table
-                st.subheader('Weekly Recommendations:')
-                
-                # Filter by selected irrigation months
-                start_month, end_month = irrigation_months
-                filtered_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)]
+            # ✅ Adjust ET0 in the table
+            df_irrigation = calc_irrigation(pNDVI, m_rain, et0, m_winter, irrigation_months, irrigation_factor)
+            total_irrigation = df_irrigation['irrigation'].sum()
 
 
-                filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
-                filtered_df[['ET0', 'ETa', 'week_irrigation']] = filtered_df[['ET0', 'ETa', 'irrigation']] / 4
+            st.markdown(f"<p style='text-align: center; font-size: 30px;'>Rain: {rain * conversion_factor:.2f} {unit_label} | ET₀: {df_irrigation['ET0'].sum():.0f} {unit_label}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='text-align: center; font-size: 30px;'>NDVI: {ndvi:.2f} | pNDVI: {pNDVI:.2f}| Irrigation: {total_irrigation:.0f} {unit_label}</p>", unsafe_allow_html=True)
 
-                # round ET0 and irrigation to the nearest 5 if units are mm
-                if "Imperial" in unit_system:
-                    filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'week_irrigation']].round(1)
-                else:
-                    filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/2).round()*2
+            # 📈 Plot
+            fig, ax = plt.subplots()
 
-                st.dataframe(
-                    filtered_df[['month', 'ET0', 'week_irrigation', 'alert']]
-                    .rename(columns={
-                        'month': 'Month',
-                        'ET0': f'ET₀ ({unit_label})',
-                        'ETa': f'ETa ({ unit_label})',
-                        'week_irrigation_volume': f'Irrigation Volume ({unit_label})',
-                        # 'week_irrigation_hours': f'Irrigation time (hours)',
-                        'alert': 'Alert'
-                    }).round(1),
-                    hide_index=True
-                )
+            # Filter data for plotting
+            start_month, end_month = irrigation_months
+            plot_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)].copy()
+            # plot_df['month'] = pd.to_datetime(plot_df['month'], format='%m')
 
-                NotesText = st.text_input("Add your notes for the report:")
+            # Add drought bars (SW1 = 0) only if they exist
+            ax.bar(plot_df.loc[plot_df['SW1'] > 0, 'month'],
+                    plot_df.loc[plot_df['SW1'] > 0, 'ETa'], alpha=1, label="ETa")
 
-                if all(key in st.session_state for key in ["ndvi", "et0"]):
-                    if "pdf_ready" not in st.session_state:
-                        st.session_state["pdf_ready"] = False
-                    if "pdf_downloaded" not in st.session_state:
-                        st.session_state["pdf_downloaded"] = False
+            if (plot_df['SW1'] == 0).any():
+                ax.bar(plot_df.loc[plot_df['SW1'] == 0, 'month'],
+                        plot_df.loc[plot_df['SW1'] == 0, 'ETa'], alpha=1, label="Drought",
+                        color='#FF4B4B')
 
-                    if st.button("⚙️ Generate PDF Report"):
-                        with st.spinner("🛠️ Generating PDF report..."):
-                            pdf_data = create_pdf_report(
-                                fig, df_irrigation, st.session_state["ndvi"],
-                                total_irrigation, unit_label, NotesText, lat, lon
-                            )
-                            st.session_state["pdf_data"] = pdf_data
-                            st.session_state["pdf_ready"] = True
-                            st.session_state["pdf_downloaded"] = False
-                            st.success("✅ PDF report generated!")
+            # Add a shaded area for SW1 behind the bars
+            ax.fill_between(
+                plot_df['month'],  # X-axis values (months)
+                0,  # Start of the shaded area (baseline)
+                plot_df['SW1'],  # End of the shaded area (SW1 values)
+                color='#74ac72',  # Green color for the shaded area
+                alpha=0.4,  # Transparency
+                label="Soil Water"
+            )
 
-                    # Show download button only if PDF is ready and not yet downloaded
-                    if st.session_state["pdf_ready"] and not st.session_state["pdf_downloaded"]:
-                        # Create a download button that also sets the "downloaded" flag
-                        if st.download_button(
-                                label="📄 Download PDF Report",
-                                data=st.session_state["pdf_data"],
-                                file_name="iMAP_Report.pdf",
-                                mime="application/pdf"
-                        ):
-                            st.session_state["pdf_downloaded"] = True  # hide button after download
-                else:
-                    st.error("❌ No weather data available to generate the report.")
+            # Set plot limits and labels
+            ax.set_xlabel("Month")
+            ax.set_ylabel(f"Water Amount ({unit_label})")
+            ax.legend()
+
+            # Display the plot
+            st.pyplot(fig)
 
 
+            # 📊 Table
+            st.subheader('Seasonal Water Budget:')
+            
+            # Filter by selected irrigation months
+            start_month, end_month = irrigation_months
+            filtered_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)]
+
+
+            filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
+            filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] / 4
+
+            # round ET0 and irrigation to the nearest 5 if units are mm
+            if "Imperial" in unit_system:
+                filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'week_irrigation']].round(1)
             else:
-                st.error("❌ No weather data found for this location.")
-                
+                filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/2).round()*2
 
+            st.dataframe(
+                filtered_df[['month', 'ET0', 'week_irrigation', 'alert']]
+                .rename(columns={
+                    'month': 'Month',
+                    'ET0': f'ET₀ ({unit_label} / week)',
+                    'week_irrigation': f'Irrigation ({unit_label} / week)',
+                    'alert': 'Alert'
+                }).round(1),
+                hide_index=True
+            )
+
+        else:
+            st.error("❌ No weather data available to generate the report.")
+                
     else:
-        st.info("🖱️ Click a location on the map to begin.")
+        st.info("Click you field --->")
         image = Image.open("img/ExampleGraph.png")  # Assuming "images" folder in your repo
         st.image(image, caption="Example image of the graphical output", use_container_width=True)
 
