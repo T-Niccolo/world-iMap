@@ -49,11 +49,8 @@ def get_ndvi(lat, lon):
         scale=50
     ).get('nd')
 
-    try:
-        return round(ndvi.getInfo(), 2) if ndvi.getInfo() is not None else None
-    except Exception as e:
-        return None
-
+    return round(ndvi.getInfo(), 2) if ndvi.getInfo() is not None else None
+    
 
 @st.cache_data(show_spinner=False)
 def get_rain(lat, lon):
@@ -200,39 +197,6 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     return df
 
 
-def save_map_as_image_static(lat, lon, zoom=15, size=(600, 450), marker_path='img/Marker.png', marker_width=50):
-    # Esri satellite tile provider
-    esri_satellite_url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-
-    # Create static map
-    m = StaticMap(size[0], size[1], url_template=esri_satellite_url)
-
-    # Open and resize marker image by width (keeping aspect ratio)
-    with Image.open(marker_path) as img:
-        # Get original aspect ratio
-        aspect_ratio = img.height / img.width
-        new_height = int(marker_width * aspect_ratio)
-        resized_img = img.resize((marker_width, new_height), Image.Resampling.LANCZOS)
-
-        buffer = BytesIO()
-        resized_img.save(buffer, format='PNG')
-        buffer.seek(0)
-
-    # Create and add marker
-    marker = IconMarker((lon, lat), buffer, offset_x=marker_width // 2, offset_y=new_height)
-    m.add_marker(marker)
-
-    # Render and save
-    image = m.render(zoom=zoom)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
-        image_path = tmp_file.name
-        image.save(image_path)
-
-    return image_path
-
-    # Function to create a PDF report
-
-
 # 🌟 **Streamlit UI**
 st.markdown("<h1 style='text-align: center;'>G-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
 st.markdown(
@@ -276,11 +240,9 @@ with col2:
 
     # --- Handle map click
     if map_data and map_data["last_clicked"] is not None and "lat" in map_data["last_clicked"]:
-        coords = map_data["last_clicked"]
-
         
+        coords = map_data["last_clicked"]
         lat, lon = coords["lat"], coords["lng"]
-
         location = (lat, lon)
 
         # Check if location changed
