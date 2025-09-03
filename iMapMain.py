@@ -402,7 +402,7 @@ with col2:
             st.error("❌ No weather data available to generate the report.")
                 
     else:
-        st.info("Click you field --->")
+        st.info("Click you field ---->")
         image = Image.open("img/ExampleGraph.png")  # Assuming "images" folder in your repo
         st.image(image, caption="Example image of the graphical output", use_container_width=True)
 
