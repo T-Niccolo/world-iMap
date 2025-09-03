@@ -502,7 +502,7 @@ with col2:
                 if "Imperial" in unit_system:
                     filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'week_irrigation']].round(1)
                 else:
-                    filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/5).round()*5
+                    filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/2).round()*2
 
                 st.dataframe(
                     filtered_df[['month', 'ET0', 'week_irrigation', 'alert']]
