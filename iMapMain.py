@@ -39,8 +39,10 @@ initialize_ee()
 @st.cache_data(show_spinner=False)
 def get_ndvi(lat, lon):
     poi = ee.Geometry.Point([lon, lat])
+
     img = ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
         .filterDate(f"{datetime.now().year - 1}-05-01", f"{datetime.now().year - 1}-06-01") \
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10)) \
         .median()
 
     ndvi = img.normalizedDifference(['B8', 'B4']).reduceRegion(
@@ -198,7 +200,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
 
 # 🌟 **Streamlit UI**
-st.markdown("<h1 style='text-align: center;'>G-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>GG-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>",
     unsafe_allow_html=True)
@@ -267,8 +269,9 @@ with col2:
         ndvi = st.session_state.get("ndvi")
         et0 = st.session_state.get("et0")
 
-        IF = 0.33 / (1 + np.exp(20 * (ndvi - 0.6))) + 1
-        pNDVI = ndvi * IF
+        # IF = 0.33 / (1 + np.exp(20 * (ndvi - 0.6))) + 1
+        # pNDVI = ndvi * IF
+        pNDVI=.8*(1-np.exp(-3.5*ndvi))
 
         if rain is not None and ndvi is not None and et0 is not None:
             
