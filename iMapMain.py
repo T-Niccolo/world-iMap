@@ -200,7 +200,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
 
 # 🌟 **Streamlit UI**
-st.markdown("<h1 style='text-align: center;'>GG-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>G-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>",
     unsafe_allow_html=True)
@@ -271,7 +271,7 @@ with col2:
 
         # IF = 0.33 / (1 + np.exp(20 * (ndvi - 0.6))) + 1
         # pNDVI = ndvi * IF
-        pNDVI=.8*(1-np.exp(-3.5*ndvi))
+        pNDVI=.8*(1-np.exp(-3*ndvi))
 
         if rain is not None and ndvi is not None and et0 is not None:
             
