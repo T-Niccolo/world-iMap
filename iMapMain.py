@@ -344,7 +344,7 @@ with col2:
 
 
             filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
-            filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] / 4
+            filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] #/ 4
 
             # round ET0 and irrigation to the nearest 5 if units are mm
             if "Imperial" in unit_system:
@@ -356,8 +356,8 @@ with col2:
                 filtered_df[['month', 'ET0', 'week_irrigation', 'alert']]
                 .rename(columns={
                     'month': 'Month',
-                    'ET0': f'ET₀ ({unit_label} / week)',
-                    'week_irrigation': f'Irrigation ({unit_label} / week)',
+                    'ET0': f'ET₀ ({unit_label})',
+                    'week_irrigation': f'Irrigation ({unit_label} )',
                     'alert': 'Alert'
                 }).round(1),
                 hide_index=True
