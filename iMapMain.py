@@ -174,7 +174,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
-    df.loc[~df['month'].isin(range(3, 11)), 'ET0'] = 0  # Zero ET0 for non-growing months
+    df.loc[~df['month'].isin(range(3, 12)), 'ET0'] = 0  # Zero ET0 for non-growing months
     df['ET0'] *= conversion_factor  # Convert ET0 to inches with 90% efficiency
 
     # Adjust ETa based on NDVI
