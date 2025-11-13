@@ -174,7 +174,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
     df.loc[~df['month'].isin(range(3, 11)) & ~df['month'].isin(mnts), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
-    df['ET0'] *= conversion_factor  # Convert ET0 to inches with 90% efficiency
+    df['ET0'] *= conversion_factor
 
     # Adjust ETa based on NDVI
     df['ETa'] = df['ET0'] * pNDVI / 0.7
@@ -298,6 +298,35 @@ with col2:
             st.markdown(f"<p style='text-align: center; font-size: 30px;'>Rain: {rain * conversion_factor:.2f} {unit_label} | ET₀: {df_irrigation['ET0'].sum():.0f} {unit_label}</p>", unsafe_allow_html=True)
             st.markdown(f"<p style='text-align: center; font-size: 30px;'>NDVI: {ndvi:.2f} | pNDVI: {pNDVI:.2f}| Irrigation: {total_irrigation:.0f} {unit_label}</p>", unsafe_allow_html=True)
 
+            # 📊 Table
+            st.subheader('Seasonal Water Budget:')
+            
+            # Filter by selected irrigation months
+            start_month, end_month = irrigation_months
+            filtered_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)]
+
+
+            filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
+            # filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] #/ 4
+
+            # round ET0 and irrigation to the nearest 5 if units are mm
+            if "Imperial" in unit_system:
+                filtered_df[['ET0', 'irrigation']] = filtered_df[['ET0', 'irrigation']].round(1)
+            else:
+                filtered_df[['ET0', 'irrigation']] = (filtered_df[['ET0', 'irrigation']]/5).round()*5
+
+            st.dataframe(
+                filtered_df[['month', 'ET0', 'irrigation', 'alert']]
+                .rename(columns={
+                    'month': 'Month',
+                    'ET0': f'ET₀ ({unit_label})',
+                    'irrigation': f'Irrigation ({unit_label} )',
+                    # 'FWB': 'SW1',
+                    'alert': 'Alert'
+                }).round(1),
+                hide_index=True
+            )
+            
             # 📈 Plot
             fig, ax = plt.subplots()
 
@@ -335,35 +364,6 @@ with col2:
             # Display the plot
             st.pyplot(fig)
 
-
-            # 📊 Table
-            st.subheader('Seasonal Water Budget:')
-            
-            # Filter by selected irrigation months
-            start_month, end_month = irrigation_months
-            filtered_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)]
-
-
-            filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
-            # filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] #/ 4
-
-            # round ET0 and irrigation to the nearest 5 if units are mm
-            if "Imperial" in unit_system:
-                filtered_df[['ET0', 'irrigation']] = filtered_df[['ET0', 'irrigation']].round(1)
-            else:
-                filtered_df[['ET0', 'irrigation']] = (filtered_df[['ET0', 'irrigation']]/5).round()*5
-
-            st.dataframe(
-                filtered_df[['month', 'ET0', 'irrigation', 'alert']]
-                .rename(columns={
-                    'month': 'Month',
-                    'ET0': f'ET₀ ({unit_label})',
-                    'irrigation': f'Irrigation ({unit_label} )',
-                    # 'FWB': 'SW1',
-                    'alert': 'Alert'
-                }).round(1),
-                hide_index=True
-            )
 
         else:
             st.error("❌ No weather data available to generate the report.")
