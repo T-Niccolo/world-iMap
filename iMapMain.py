@@ -170,11 +170,11 @@ def display_map():
 def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_factor):
     df = et0.copy()
 
-    rain1 = rain + m_winter
+    rain1 = rain * 0.8 + m_winter
 
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
-    df.loc[~df['month'].isin(range(3, 11)), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
+    df[~df['month'].isin(range(3, 11))]['ET0'] = 0  # Zero ET0 for non-growing months (including November)
     df['ET0'] *= conversion_factor  # Convert ET0 to inches with 90% efficiency
 
     # Adjust ETa based on NDVI
@@ -190,7 +190,8 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
     vst = df.loc[df['month'] == 7, 'irrigation'] * 0.1
     df.loc[df['month'] == 7, 'irrigation'] *= 0.8
-    df.loc[df['month'].isin([8, 9]), 'irrigation'] += vst.values[0] if not vst.empty else 0
+    # df.loc[df['month'].isin([8, 9]), 'irrigation'] += vst.values[0] if not vst.empty else 0
+    df[df['month'].isin([8, 9])]['irrigation'] += vst.values[0] if not vst.empty else 0
 
     df['SW1'] = (rain1 - df['ETa'].cumsum() + df['irrigation'].cumsum()).clip(lower=0)
 
