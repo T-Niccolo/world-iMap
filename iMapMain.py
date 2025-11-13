@@ -29,7 +29,7 @@ def initialize_ee():
     # Initialize Earth Engine
     # ee.Initialize(credentials)
 
-initialize_ee()
+# initialize_ee()
 # ee.Initialize()
 # ee.Authenticate()
 # ee.Initialize(project="rsc-gwab-lzp")
@@ -57,8 +57,9 @@ def get_ndvi(lat, lon):
 def get_rain(lat, lon):
     # Determine start date: Nov 1 of this or last year
     today = datetime.today()
-    start_year = today.year - 1 if today.month < 11 else today.year
+    start_year = today.year - 1 #if today.month < 11 else today.year
     start_date = f"{start_year}-11-01"
+    end_date = f"{today.year}-04-01"
 
     # Build API URL
     url = "https://archive-api.open-meteo.com/v1/archive"
@@ -66,7 +67,7 @@ def get_rain(lat, lon):
         "latitude": lat,
         "longitude": lon,
         "start_date": start_date,
-        "end_date": today.strftime("%Y-%m-%d"),
+        "end_date": end_date, #today.strftime("%Y-%m-%d"),
         "daily": "rain_sum",
         "timezone": "auto"
     }
