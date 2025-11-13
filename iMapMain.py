@@ -170,7 +170,7 @@ def display_map():
 def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_factor):
     df = et0.copy()
 
-    rain1 = rain + m_winter
+    rain1 = rain*0.8 + m_winter
 
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
@@ -181,7 +181,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     df['ETa'] = df['ET0'] * pNDVI / 0.7
 
     # # Soil water balance
-    SWI = (rain1 - df['ETa'].sum() - 50 * conversion_factor) / len(mnts)
+    SWI = (rain1 - df[~df['month'].isin(mnts)]['ETa'].sum() - 50 * conversion_factor) / len(mnts)
 
     df.loc[df['month'].isin(mnts), 'irrigation'] = df['ETa'] - SWI
     df['irrigation'] = df['irrigation'].clip(lower=0)
@@ -281,7 +281,7 @@ with col2:
                                         help="Do you know a better value? Do you think less water was retained in the soil?")
 
             # 🔄 Always recalculate irrigation when sliders or location change
-            df_irrigation = calc_irrigation(pNDVI, m_rain*.8 , et0, m_winter, irrigation_months, 1)
+            df_irrigation = calc_irrigation(pNDVI, m_rain , et0, m_winter, irrigation_months, 1)
 
             total_irrigation = df_irrigation['irrigation'].sum()
             m_irrigation = st.sidebar.slider(f"Water Allocation ({unit_label})", 0,
@@ -292,7 +292,7 @@ with col2:
             irrigation_factor = m_irrigation / total_irrigation
 
             # ✅ Adjust ET0 in the table
-            df_irrigation = calc_irrigation(pNDVI, m_rain*.8, et0, m_winter, irrigation_months, irrigation_factor)
+            df_irrigation = calc_irrigation(pNDVI, m_rain, et0, m_winter, irrigation_months, irrigation_factor)
             total_irrigation = df_irrigation['irrigation'].sum()
 
 
