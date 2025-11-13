@@ -358,7 +358,7 @@ with col2:
                     'month': 'Month',
                     'ET0': f'ET₀ ({unit_label})',
                     'week_irrigation': f'Irrigation ({unit_label} )',
-                    'FWB': 'SW1',
+                    'FWB': 'Alert',
                     'alert': 'Alert'
                 }).round(1),
                 hide_index=True
