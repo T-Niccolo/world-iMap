@@ -353,12 +353,12 @@ with col2:
                 filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/5).round()*5
 
             st.dataframe(
-                filtered_df[['month', 'ET0', 'week_irrigation', 'alert']]
+                filtered_df[['month', 'ET0', 'week_irrigation', 'SW1', 'alert']]
                 .rename(columns={
                     'month': 'Month',
                     'ET0': f'ET₀ ({unit_label})',
                     'week_irrigation': f'Irrigation ({unit_label} )',
-                    'FWB': 'Alert',
+                    'FWB': 'SW1',
                     'alert': 'Alert'
                 }).round(1),
                 hide_index=True
