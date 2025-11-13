@@ -190,8 +190,8 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
     vst = df.loc[df['month'] == 7, 'irrigation'] * 0.1
     df.loc[df['month'] == 7, 'irrigation'] *= 0.8
-    # df.loc[df['month'].isin([8, 9]), 'irrigation'] += vst.values[0] if not vst.empty else 0
-    df[df['month'].isin([8, 9])]['irrigation'] += vst.values[0] if not vst.empty else 0
+    df.loc[df['month'].isin([8, 9]), 'irrigation'] += vst.values[0] if not vst.empty else 0
+    # df[df['month'].isin([8, 9])]['irrigation'] += vst.values[0] if not vst.empty else 0
 
     df['SW1'] = (rain1 - df['ETa'].cumsum() + df['irrigation'].cumsum()).clip(lower=0)
 
