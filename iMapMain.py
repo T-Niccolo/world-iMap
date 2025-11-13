@@ -181,7 +181,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     df['ETa'] = df['ET0'] * pNDVI / 0.7
 
     # # Soil water balance
-    SWI = (rain1 - df[~df['month'].isin(mnts)]['ETa'].sum() - 50*.8 * conversion_factor) / len(mnts)
+    SWI = (rain1 - df[~df['month'].isin(mnts)]['ETa'].sum() - 50/.8 * conversion_factor) / len(mnts)
 
     df.loc[df['month'].isin(mnts), 'irrigation'] = df['ETa'] - SWI
     df['irrigation'] = df['irrigation'].clip(lower=0)
