@@ -31,9 +31,8 @@ def initialize_ee():
 
 initialize_ee()
 # ee.Initialize()
-# ee.Initialize(project="ee-orsperling")
 # ee.Authenticate()
-
+# ee.Initialize(project="rsc-gwab-lzp")
 
 # 🌍 Function to Fetch NDVI from Google Earth Engine
 @st.cache_data(show_spinner=False)
@@ -174,14 +173,14 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
-    df.loc[~df['month'].isin(range(3, 11)), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
+    df.loc[~df['month'].isin(range(3, 11)) & ~df['month'].isin(mnts), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
     df['ET0'] *= conversion_factor  # Convert ET0 to inches with 90% efficiency
 
     # Adjust ETa based on NDVI
     df['ETa'] = df['ET0'] * pNDVI / 0.7
 
     # # Soil water balance
-    SWI = (rain1 - df[~df['month'].isin(mnts)]['ETa'].sum() - 50 * conversion_factor) / len(mnts)
+    SWI = (rain1 - df.loc[~df['month'].isin(mnts), 'ETa'].sum() - 50 * conversion_factor) / len(mnts)
 
     df.loc[df['month'].isin(mnts), 'irrigation'] = df['ETa'] - SWI
     df['irrigation'] = df['irrigation'].clip(lower=0)
@@ -305,15 +304,17 @@ with col2:
             # Filter data for plotting
             start_month, end_month = irrigation_months
             plot_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)].copy()
+            plot_df['cumsum_irrigation'] = plot_df['irrigation'].cumsum()
+
             # plot_df['month'] = pd.to_datetime(plot_df['month'], format='%m')
 
             # Add drought bars (SW1 = 0) only if they exist
             ax.bar(plot_df.loc[plot_df['SW1'] > 0, 'month'],
-                    plot_df.loc[plot_df['SW1'] > 0, 'ETa'], alpha=1, label="ETa")
+                    plot_df.loc[plot_df['SW1'] > 0, 'cumsum_irrigation'], alpha=1, label="Hydration")
 
             if (plot_df['SW1'] == 0).any():
                 ax.bar(plot_df.loc[plot_df['SW1'] == 0, 'month'],
-                        plot_df.loc[plot_df['SW1'] == 0, 'ETa'], alpha=1, label="Drought",
+                        plot_df.loc[plot_df['SW1'] == 0, 'cumsum_irrigation'], alpha=1, label="Drought",
                         color='#FF4B4B')
 
             # Add a shaded area for SW1 behind the bars
@@ -323,12 +324,12 @@ with col2:
                 plot_df['SW1'],  # End of the shaded area (SW1 values)
                 color='#74ac72',  # Green color for the shaded area
                 alpha=0.4,  # Transparency
-                label="Soil Water"
+                label="Water Budget"
             )
 
             # Set plot limits and labels
             ax.set_xlabel("Month")
-            ax.set_ylabel(f"Water Amount ({unit_label})")
+            ax.set_ylabel(f"Water ({unit_label})")
             ax.legend()
 
             # Display the plot
@@ -344,21 +345,21 @@ with col2:
 
 
             filtered_df['month'] = pd.to_datetime(filtered_df['month'], format='%m').dt.month_name()
-            filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] #/ 4
+            # filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'irrigation']] #/ 4
 
             # round ET0 and irrigation to the nearest 5 if units are mm
             if "Imperial" in unit_system:
-                filtered_df[['ET0', 'week_irrigation']] = filtered_df[['ET0', 'week_irrigation']].round(1)
+                filtered_df[['ET0', 'irrigation']] = filtered_df[['ET0', 'irrigation']].round(1)
             else:
-                filtered_df[['ET0', 'week_irrigation']] = (filtered_df[['ET0', 'week_irrigation']]/5).round()*5
+                filtered_df[['ET0', 'irrigation']] = (filtered_df[['ET0', 'irrigation']]/5).round()*5
 
             st.dataframe(
-                filtered_df[['month', 'ET0', 'week_irrigation', 'SW1', 'alert']]
+                filtered_df[['month', 'ET0', 'irrigation', 'alert']]
                 .rename(columns={
                     'month': 'Month',
                     'ET0': f'ET₀ ({unit_label})',
-                    'week_irrigation': f'Irrigation ({unit_label} )',
-                    'FWB': 'SW1',
+                    'irrigation': f'Irrigation ({unit_label} )',
+                    # 'FWB': 'SW1',
                     'alert': 'Alert'
                 }).round(1),
                 hide_index=True
