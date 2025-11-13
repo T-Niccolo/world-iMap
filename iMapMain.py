@@ -174,14 +174,14 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
     mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
 
-    df.loc[~df['month'].isin(range(3, 12)), 'ET0'] = 0  # Zero ET0 for non-growing months
+    df.loc[~df['month'].isin(range(3, 11)), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
     df['ET0'] *= conversion_factor  # Convert ET0 to inches with 90% efficiency
 
     # Adjust ETa based on NDVI
     df['ETa'] = df['ET0'] * pNDVI / 0.7
 
     # # Soil water balance
-    SWI = (rain1 - df.loc[~df['month'].isin(mnts), 'ETa'].sum() - 50 * conversion_factor) / len(mnts)
+    SWI = (rain1 - df.loc['ETa'].sum() - 50 * conversion_factor) / len(mnts)
 
     df.loc[df['month'].isin(mnts), 'irrigation'] = df['ETa'] - SWI
     df['irrigation'] = df['irrigation'].clip(lower=0)
