@@ -29,8 +29,8 @@ def initialize_ee():
     # Initialize Earth Engine
     ee.Initialize(credentials)
 
-# initialize_ee()
-ee.Initialize()
+initialize_ee()
+# ee.Initialize()
 # ee.Authenticate()
 # ee.Initialize(project="rsc-gwab-lzp")
 
@@ -63,16 +63,14 @@ def get_rain(lat, lon):
     today = datetime.now()
     if today.month < 3:
         today = today.replace(year=today.year - 1)
-    start_date = f"{today.year - 1}-11-01"
-    end_date = f"{today.year}-03-01"
-
+    
     # Build API URL
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
         "latitude": lat,
         "longitude": lon,
-        "start_date": start_date,
-        "end_date": end_date, #today.strftime("%Y-%m-%d"),
+        "start_date": f"{today.year - 1}-11-01",
+        "end_date": f"{today.year}-03-01",
         "daily": "rain_sum",
         "timezone": "auto"
     }
