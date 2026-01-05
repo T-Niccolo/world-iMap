@@ -29,8 +29,8 @@ def initialize_ee():
     # Initialize Earth Engine
     ee.Initialize(credentials)
 
-# initialize_ee()
-ee.Initialize()
+initialize_ee()
+# ee.Initialize()
 # ee.Authenticate()
 # ee.Initialize(project="rsc-gwab-lzp")
 
@@ -205,7 +205,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
 
 
 # 🌟 **Streamlit UI**
-st.markdown("<h1 style='text-align: center;'>G-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>G-WaBM: Geographic Water Budget</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>"
     "<p style='text-align: center;'><a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), "
