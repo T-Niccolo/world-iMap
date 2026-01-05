@@ -29,8 +29,8 @@ def initialize_ee():
     # Initialize Earth Engine
     ee.Initialize(credentials)
 
-initialize_ee()
-# ee.Initialize()
+# initialize_ee()
+ee.Initialize()
 # ee.Authenticate()
 # ee.Initialize(project="rsc-gwab-lzp")
 
@@ -39,8 +39,12 @@ initialize_ee()
 def get_ndvi(lat, lon):
     poi = ee.Geometry.Point([lon, lat])
 
+    today = datetime.now()
+    if today.month < 6:
+        today = today.replace(year=today.year - 1)
+
     img = ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
-        .filterDate(f"{datetime.now().year - 1}-05-01", f"{datetime.now().year - 1}-06-01") \
+        .filterDate(f"{today.year}-05-01", f"{today.year}-06-01") \
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10)) \
         .median()
 
@@ -56,10 +60,11 @@ def get_ndvi(lat, lon):
 @st.cache_data(show_spinner=False)
 def get_rain(lat, lon):
     # Determine start date: Nov 1 of this or last year
-    today = datetime.today()
-    start_year = today.year - 1 #if today.month < 11 else today.year
-    start_date = f"{start_year}-11-01"
-    end_date = f"{today.year}-04-01"
+    today = datetime.now()
+    if today.month < 3:
+        today = today.replace(year=today.year - 1)
+    start_date = f"{today.year - 1}-11-01"
+    end_date = f"{today.year}-03-01"
 
     # Build API URL
     url = "https://archive-api.open-meteo.com/v1/archive"
