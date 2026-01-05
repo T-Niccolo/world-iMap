@@ -29,8 +29,8 @@ def initialize_ee():
     # Initialize Earth Engine
     ee.Initialize(credentials)
 
-initialize_ee()
-# ee.Initialize()
+# initialize_ee()
+ee.Initialize()
 # ee.Authenticate()
 # ee.Initialize(project="rsc-gwab-lzp")
 
