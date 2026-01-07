@@ -59,36 +59,25 @@ def get_ndvi(lat, lon):
 
 @st.cache_data(show_spinner=False)
 def get_rain(lat, lon):
-    # Determine start date: Nov 1 of this or last year
-    today = datetime.now()
+    today = datetime.today()
     if today.month < 3:
         today = today.replace(year=today.year - 1)
-    
-    # Build API URL
-    url = "https://archive-api.open-meteo.com/v1/archive"
-    params = {
-        "latitude": lat,
-        "longitude": lon,
-        "start_date": f"{today.year - 1}-11-01",
-        "end_date": f"{today.year}-03-01",
-        "daily": "rain_sum",
-        "timezone": "auto"
-    }
 
-    # Fetch and parse data
-    openmeteo = openmeteo_requests.Client()
-    responses = openmeteo.weather_api(url, params=params)
-    response = responses[0]
+    poi = ee.Geometry.Point([lon, lat])
+    rain_sum = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY') \
+        .filterDate(f"{today.year - 1}-11-01", f"{today.year}-04-01") \
+        .sum() \
+        .reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=poi,
+            scale=5000
+        ).get('precipitation')
 
-    # Extract rain and time values
-    time = response.Daily().Time()
-    rain = response.Daily().Variables(0).ValuesAsNumpy()
-
-    # Build DataFrame
-    df = pd.DataFrame({"time": pd.to_datetime(time), "rain": rain})
-
-    # Return total rainfall
-    return round(df["rain"].sum(skipna=True), 1)
+    try:
+        val = rain_sum.getInfo()
+        return round(val, 1) if val is not None else 0.0
+    except Exception:
+        return 0.0
 
 
 @st.cache_data(show_spinner=False)
