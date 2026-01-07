@@ -83,52 +83,32 @@ def get_rain(lat, lon):
 @st.cache_data(show_spinner=False)
 def get_et0(lat, lon):
     today = datetime.today()
-    start_date = f"{today.year - 5}-01-01"
-    end_date = f"{today.year - 1}-12-31"
-
-    url = "https://archive-api.open-meteo.com/v1/archive"
-    params = {
-        "latitude": lat,
-        "longitude": lon,
-        "start_date": start_date,
-        "end_date": end_date,
-        "daily": "et0_fao_evapotranspiration",
-        "timezone": "auto"
-    }
-
-    openmeteo = openmeteo_requests.Client()
-    responses = openmeteo.weather_api(url, params=params)
-    response = responses[0]
-
-    # Build dataframe
-
-    daily=response.Daily()
+    poi = ee.Geometry.Point([lon, lat])
     
-    time = pd.date_range(
-        start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
-        end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
-        freq = pd.Timedelta(seconds = daily.Interval()),
-        inclusive = "left"
-    )
+    dataset = ee.ImageCollection("IDAHO_EPSCOR/TERRACLIMATE") \
+        .filterDate(f"{today.year - 5}-01-01", f"{today.year - 1}-12-31") \
+        .select('pet')
 
-    et0 = response.Daily().Variables(0).ValuesAsNumpy()
+    def get_monthly_stat(m):
+        m = ee.Number(m)
+        mean_img = dataset.filter(ee.Filter.calendarRange(m, m, 'month')).mean()
+        val = mean_img.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=poi,
+            scale=4638.3
+        ).get('pet')
+        return ee.Feature(None, {'month': m, 'ET0': val})
 
-    # Build DataFrame
-    df = pd.DataFrame({"time": time, "et0": et0})
-
-    df["year"] = df["time"].dt.year
-    df["month"] = df["time"].dt.month
+    stats = ee.FeatureCollection(ee.List.sequence(1, 12).map(get_monthly_stat)).getInfo()
     
-    # Step 1: sum ET₀ per (year, month)
-    monthly_sums = df.groupby(["year", "month"])["et0"].sum().reset_index()
-
-    # Step 2: average monthly sums across years
-    avg_monthly_et0 = monthly_sums.groupby("month")["et0"].mean().reset_index()
-    avg_monthly_et0["et0"] = avg_monthly_et0["et0"]
-
-    avg_monthly_et0.rename(columns={"et0": "ET0"}, inplace=True)
-
-    return avg_monthly_et0
+    results = []
+    for f in stats['features']:
+        p = f['properties']
+        # TerraClimate 'pet' has a scale of 0.1
+        val = p['ET0'] * 0.1 if p['ET0'] is not None else 0.0
+        results.append({'month': int(p['month']), 'ET0': round(val, 2)})
+        
+    return pd.DataFrame(results)
 
 
 # DEFAULT_CENTER = [35.26, -119.15]
