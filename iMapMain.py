@@ -38,7 +38,6 @@ initialize_ee()
 @st.cache_data(show_spinner=False)
 def get_ndvi(lat, lon):
     poi = ee.Geometry.Point([lon, lat])
-
     today = datetime.now()
     if today.month < 6:
         today = today.replace(year=today.year - 1)
@@ -49,14 +48,10 @@ def get_ndvi(lat, lon):
         .median()
 
     ndvi = img.normalizedDifference(['B8', 'B4']).reduceRegion(
-        reducer=ee.Reducer.mean(),
-        geometry=poi,
-        scale=50
-    ).get('nd')
+        ee.Reducer.mean(), poi, 50).get('nd').getInfo()
 
-    return round(ndvi.getInfo(), 2) if ndvi.getInfo() is not None else None
+    return round(ndvi, 2) if ndvi else None
     
-
 @st.cache_data(show_spinner=False)
 def get_rain(lat, lon):
     today = datetime.today()
@@ -73,42 +68,27 @@ def get_rain(lat, lon):
             scale=5000
         ).get('precipitation')
 
-    try:
-        val = rain_sum.getInfo()
-        return round(val, 1) if val is not None else 0.0
-    except Exception:
-        return 0.0
-
-
+    return round(rain_sum.getInfo() or 0.0, 1)
+    
 @st.cache_data(show_spinner=False)
 def get_et0(lat, lon):
-    today = datetime.today()
     poi = ee.Geometry.Point([lon, lat])
-    
     dataset = ee.ImageCollection("IDAHO_EPSCOR/TERRACLIMATE") \
-        .filterDate(f"{today.year - 5}-01-01", f"{today.year - 1}-12-31") \
+        .filterDate("2019-01-01", "2024-12-31") \
         .select('pet')
 
-    def get_monthly_stat(m):
-        m = ee.Number(m)
-        mean_img = dataset.filter(ee.Filter.calendarRange(m, m, 'month')).mean()
-        val = mean_img.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=poi,
-            scale=4638.3
-        ).get('pet')
-        return ee.Feature(None, {'month': m, 'ET0': val})
-
-    stats = ee.FeatureCollection(ee.List.sequence(1, 12).map(get_monthly_stat)).getInfo()
+    stats = ee.FeatureCollection(ee.List.sequence(1, 12).map(
+        lambda m: ee.Feature(None, {
+            'month': m,
+            'ET0': dataset.filter(ee.Filter.calendarRange(m, m, 'month')).mean() \
+                .reduceRegion(ee.Reducer.mean(), poi, 4638.3).get('pet')
+        })
+    )).getInfo()
     
-    results = []
-    for f in stats['features']:
-        p = f['properties']
-        # TerraClimate 'pet' has a scale of 0.1
-        val = p['ET0'] * 0.1 if p['ET0'] is not None else 0.0
-        results.append({'month': int(p['month']), 'ET0': round(val, 2)})
-        
-    return pd.DataFrame(results)
+    return pd.DataFrame([{
+        'month': int(f['properties']['month']),
+        'ET0': round(f['properties']['ET0'] * 0.1 or 0, 2)
+    } for f in stats['features']])
 
 
 # DEFAULT_CENTER = [35.26, -119.15]
@@ -141,31 +121,35 @@ def display_map():
 # 📊 Function to Calculate Irrigation
 def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_factor):
     df = et0.copy()
-
-    rain1 = rain * 0.8 + m_winter
-
-    mnts = list(range(irrigation_months[0], irrigation_months[1] + 1))
-
-    df.loc[~df['month'].isin(range(3, 11)) & ~df['month'].isin(mnts), 'ET0'] = 0  # Zero ET0 for non-growing months (including November)
+    rain_eff = (rain * conversion_factor * 0.8) + m_winter
+    
+    m_start, m_end = irrigation_months
+    irr_mnts = list(range(m_start, m_end + 1))
+    
+    # Apply growing season constraints and conversion
+    is_active = df['month'].isin(range(3, 11)) | df['month'].isin(irr_mnts)
+    df.loc[~is_active, 'ET0'] = 0
     df['ET0'] *= conversion_factor
-
-    # Adjust ETa based on NDVI
     df['ETa'] = df['ET0'] * pNDVI / 0.7
 
-    # # Soil water balance
-    SWI = (rain1 - df.loc[~df['month'].isin(mnts), 'ETa'].sum() - 50 * conversion_factor) / len(mnts)
+    # Calculate Soil Water Index (SWI)
+    eta_off_season = df.loc[~df['month'].isin(irr_mnts), 'ETa'].sum()
+    swi = (rain_eff - eta_off_season - 50 * conversion_factor) / len(irr_mnts)
 
-    df.loc[df['month'].isin(mnts), 'irrigation'] = df['ETa'] - SWI
-    df['irrigation'] = df['irrigation'].clip(lower=0)
-    df['irrigation'] = df['irrigation'].fillna(0)
-    df["irrigation"] *= irrigation_factor
+    # Calculate Irrigation
+    df['irrigation'] = 0.0
+    mask = df['month'].isin(irr_mnts)
+    df.loc[mask, 'irrigation'] = (df.loc[mask, 'ETa'] - swi).clip(lower=0)
+    df['irrigation'] *= irrigation_factor
 
-    vst = df.loc[df['month'] == 7, 'irrigation'] * 0.1
-    df.loc[df['month'] == 7, 'irrigation'] *= 0.8
-    df.loc[df['month'].isin([8, 9]), 'irrigation'] += vst.values[0] if not vst.empty else 0
+    # Adjust for peak summer redistribution
+    vst = df.loc[df['month'] == 7, 'irrigation'].iloc[0] * 0.2
+    df.loc[df['month'] == 7, 'irrigation'] -= vst
+    df.loc[df['month'] == 8, 'irrigation'] += vst * 0.4
+    df.loc[df['month'] == 9, 'irrigation'] += vst * 0.6
 
-    df['SW1'] = (rain1 - df['ETa'].cumsum() + df['irrigation'].cumsum()).clip(lower=0)
-
+    # Final balance and status
+    df['SW1'] = (rain_eff - df['ETa'].cumsum() + df['irrigation'].cumsum()).clip(lower=0)
     df['alert'] = np.where(df['SW1'] == 0, 'drought', 'safe')
 
     return df
@@ -313,11 +297,11 @@ with col2:
 
             # Add drought bars (SW1 = 0) only if they exist
             ax.bar(plot_df.loc[plot_df['SW1'] > 0, 'month'],
-                    plot_df.loc[plot_df['SW1'] > 0, 'cumsum_irrigation'], alpha=1, label="Hydration")
+                    plot_df.loc[plot_df['SW1'] > 0, 'cumsum_irrigation'], alpha=1, label="Irrigation")
 
             if (plot_df['SW1'] == 0).any():
                 ax.bar(plot_df.loc[plot_df['SW1'] == 0, 'month'],
-                        plot_df.loc[plot_df['SW1'] == 0, 'cumsum_irrigation'], alpha=1, label="Drought",
+                        plot_df.loc[plot_df['SW1'] == 0, 'cumsum_irrigation'], alpha=1, label="Deficit Irrigation",
                         color='#FF4B4B')
 
             # Add a shaded area for SW1 behind the bars
