@@ -5,7 +5,7 @@ from PIL import Image
 
 def display_header():
     """Displays the header of the Streamlit app."""
-    st.markdown("<h1 style='text-align: center;'>Gg-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>G-WaB: Geographic Water Budget</h1>", unsafe_allow_html=True)
     st.markdown(
         "<p style='text-align: center; font-size: 20px'>A <a href=\"https://www.bard-isus.org/\"> <strong>BARD</strong></a> research report by: </p>"
         "<p style='text-align: center;'><a href=\"mailto:orsp@volcani.agri.gov.il\"> <strong>Or Sperling</strong></a> (ARO-Volcani), "
