@@ -3,12 +3,13 @@ import numpy as np
 def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_factor, conversion_factor):
     """Calculates the irrigation required."""
     df = et0.copy()
-    rain_eff = (rain * conversion_factor * 0.8) + m_winter
+    rain_eff = rain * 0.8 + m_winter
+    if rain_eff > 450 * conversion_factor: rain_eff = 450 * conversion_factor
     
     m_start, m_end = irrigation_months
     irr_mnts = list(range(m_start, m_end + 1))
     
-    is_active = df['month'].isin(range(3, 11)) | df['month'].isin(irr_mnts)
+    is_active = df['month'].isin(range(3, 11))# | df['month'].isin(irr_mnts)
     df.loc[~is_active, 'ET0'] = 0
     df['ET0'] *= conversion_factor
     df['ETa'] = df['ET0'] * pNDVI / 0.73

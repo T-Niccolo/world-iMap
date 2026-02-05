@@ -25,20 +25,23 @@ def get_ndvi(lat, lon):
 def get_rain(lat, lon):
     """Fetches rainfall data from Google Earth Engine."""
     today = datetime.today()
-    if today.month < 3:
+    if today.month < 2:
         today = today.replace(year=today.year - 1)
 
     poi = ee.Geometry.Point([lon, lat])
-    rain_sum = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY') \
-        .filterDate(f"{today.year - 1}-11-01", f"{today.year}-04-01") \
-        .sum() \
-        .reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=poi,
-            scale=5000
-        ).get('precipitation')
+    collection = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY') \
+        .filterDate(f"{today.year - 1}-11-01", f"{today.year}-04-01")
 
-    return round(rain_sum.getInfo() or 0.0, 1)
+    rain_sum = collection.sum().reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=poi,
+        scale=5000
+    ).get('precipitation')
+
+    latest_rain = collection.sort('system:time_start', False).first()
+    latest_date = ee.Date(latest_rain.get('system:time_start')).format('YYYY-MM-dd').getInfo()
+
+    return round(rain_sum.getInfo() or 0.0, 1), latest_date
 
 @st.cache_data(show_spinner=False)
 def get_et0(lat, lon):

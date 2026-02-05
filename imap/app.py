@@ -33,10 +33,13 @@ def main():
                 st.session_state["last_location"] = location
                 st.session_state["last_location_time"] = now
                 st.session_state["et0"] = get_et0(lat, lon)
-                st.session_state["rain"] = get_rain(lat, lon)
+                rain_sum, rain_date = get_rain(lat, lon)
+                st.session_state["rain"] = rain_sum
+                st.session_state["rain_date"] = rain_date
                 st.session_state["ndvi"] = get_ndvi(lat, lon)
 
             rain = st.session_state.get("rain")
+            rain_date = st.session_state.get("rain_date")
             ndvi = st.session_state.get("ndvi")
             et0 = st.session_state.get("et0")
 
@@ -45,7 +48,7 @@ def main():
                 total_rain = rain * conversion_factor
                 m_rain = st.sidebar.slider(f"Fix Rain to Field ({unit_label})", 0, int(round(1000 * conversion_factor)),
                                             int(total_rain), step=1, disabled=False,
-                                            help="Do you know a better value? Do you think less water was retained in the soil?")
+                                            help=f"Last rain record on {rain_date}. Adjust rain to match field conditions.")
 
                 df_irrigation = calc_irrigation(pNDVI, m_rain, et0, m_winter, irrigation_months, 1, conversion_factor)
                 total_irrigation = df_irrigation['irrigation'].sum()

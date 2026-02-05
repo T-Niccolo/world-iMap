@@ -63,7 +63,7 @@ def display_results(rain, ndvi, pNDVI, et0, df_irrigation, total_irrigation, uni
     fig, ax = plt.subplots()
 
     start_month, end_month = irrigation_months
-    plot_df = df_irrigation[df_irrigation['month'].between(start_month, end_month)].copy()
+    plot_df = df_irrigation[df_irrigation['month'].between(start_month-1, end_month)].copy()
     plot_df['cumsum_irrigation'] = plot_df['irrigation'].cumsum()
 
     ax.bar(plot_df.loc[plot_df['SW1'] > 0, 'month'],
