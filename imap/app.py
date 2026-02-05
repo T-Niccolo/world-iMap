@@ -41,7 +41,7 @@ def main():
             et0 = st.session_state.get("et0")
 
             if rain is not None and ndvi is not None and et0 is not None:
-                pNDVI = 0.8 * (1 - np.exp(-3 * ndvi))
+                pNDVI = 0.8 * (1 - np.exp(-3.5 * ndvi))
                 total_rain = rain * conversion_factor
                 m_rain = st.sidebar.slider(f"Fix Rain to Field ({unit_label})", 0, int(round(1000 * conversion_factor)),
                                             int(total_rain), step=1, disabled=False,
