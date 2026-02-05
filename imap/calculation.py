@@ -11,7 +11,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     is_active = df['month'].isin(range(3, 11)) | df['month'].isin(irr_mnts)
     df.loc[~is_active, 'ET0'] = 0
     df['ET0'] *= conversion_factor
-    df['ETa'] = df['ET0'] * pNDVI / 0.73
+    df['ETa'] = df['ET0'] * pNDVI / 0.7
 
     eta_off_season = df.loc[~df['month'].isin(irr_mnts), 'ETa'].sum()
     swi = (rain_eff - eta_off_season - 50 * conversion_factor) / len(irr_mnts)
