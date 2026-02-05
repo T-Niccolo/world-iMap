@@ -4,7 +4,7 @@ def calc_irrigation(pNDVI, rain, et0, m_winter, irrigation_months, irrigation_fa
     """Calculates the irrigation required."""
     df = et0.copy()
     rain_eff = rain * 0.8 + m_winter
-    if rain_eff > 450 * conversion_factor: rain_eff = 450 * conversion_factor
+    if rain_eff > 445 * conversion_factor: rain_eff = 445 * conversion_factor
     
     m_start, m_end = irrigation_months
     irr_mnts = list(range(m_start, m_end + 1))
